@@ -1,22 +1,73 @@
-from flask import Flask
-from flask_cors import CORS
-from routes.describe import describe_bp
+from flask import Flask, request, jsonify
+from datetime import datetime
+import os
+import json
+from dotenv import load_dotenv
+from groq import Groq
+
+load_dotenv()
 
 app = Flask(__name__)
-CORS(app)
+client = Groq(api_key=os.getenv("GROQ_API_KEY"))
 
-# Register describe route
-app.register_blueprint(describe_bp)
-
-# Home route
-@app.route("/")
-def home():
-    return {"message": "AI Service Running"}
-
-# Health check route
 @app.route('/health', methods=['GET'])
 def health():
-    return {"status": "ok", "service": "ai-service"}
+    return jsonify({"status": "ok", "service": "ai-service"})
+
+@app.route('/describe', methods=['POST'])
+def describe():
+    data = request.get_json()
+    required_fields = ['vendor_name', 'category', 'performance_score',
+                       'delivery_rate', 'quality_rating', 'contract_value']
+    for field in required_fields:
+        if field not in data:
+            return jsonify({"error": f"Missing field: {field}"}), 400
+    with open("prompts/describe_prompt.txt", "r") as f:
+        prompt_template = f.read()
+    prompt = prompt_template.format(**data)
+    try:
+        response = client.chat.completions.create(
+            model="llama-3.3-70b-versatile",
+            messages=[{"role": "user", "content": prompt}],
+            temperature=0.3,
+            max_tokens=500
+        )
+        result = response.choices[0].message.content
+        return jsonify({
+            "vendor_name": data['vendor_name'],
+            "analysis": result,
+            "generated_at": datetime.utcnow().isoformat() + "Z"
+        })
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+@app.route('/recommend', methods=['POST'])
+def recommend():
+    data = request.get_json()
+    required_fields = ['vendor_name', 'category', 'performance_score',
+                       'delivery_rate', 'quality_rating', 'contract_value']
+    for field in required_fields:
+        if field not in data:
+            return jsonify({"error": f"Missing field: {field}"}), 400
+    with open("prompts/recommend_prompt.txt", "r") as f:
+        prompt_template = f.read()
+    prompt = prompt_template.format(**data)
+    try:
+        response = client.chat.completions.create(
+            model="llama-3.3-70b-versatile",
+            messages=[{"role": "user", "content": prompt}],
+            temperature=0.3,
+            max_tokens=500
+        )
+        result = response.choices[0].message.content
+        recommendations = json.loads(result)
+        return jsonify({
+            "vendor_name": data['vendor_name'],
+            "recommendations": recommendations,
+            "generated_at": datetime.utcnow().isoformat() + "Z"
+        })
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5000, debug=True)
