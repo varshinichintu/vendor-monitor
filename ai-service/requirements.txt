@@ -3,3 +3,4 @@ python-dotenv==1.0.0
 groq==0.4.2
 flask-limiter==3.5.0
 redis==5.0.1
+flask-talisman==1.1.0
