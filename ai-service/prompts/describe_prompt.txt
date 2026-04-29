@@ -1,0 +1,15 @@
+You are a vendor performance analyst. Given the following vendor data, provide a structured analysis.
+
+Vendor Name: {vendor_name}
+Category: {category}
+Performance Score: {performance_score}
+Delivery Rate: {delivery_rate}%
+Quality Rating: {quality_rating}
+Contract Value: {contract_value}
+
+Provide a JSON response with:
+- summary: 2-3 sentence description of vendor performance
+- strengths: list of 2-3 strengths
+- concerns: list of 2-3 concerns
+- overall_rating: excellent/good/fair/poor
+- generated_at: current timestamp
