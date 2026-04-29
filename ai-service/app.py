@@ -21,8 +21,17 @@ def add_security_headers(response):
     response.headers['Referrer-Policy'] = 'strict-origin-when-cross-origin'
     return response
 
-client = Groq(api_key=os.getenv("GROQ_API_KEY"))
+print("Loading sentence-transformers model...")
+try:
+    from sentence_transformers import SentenceTransformer
+    embedding_model = SentenceTransformer('all-MiniLM-L6-v2')
+    EMBEDDINGS_AVAILABLE = True
+    print("Sentence-transformers loaded!")
+except Exception as e:
+    EMBEDDINGS_AVAILABLE = False
+    print("Sentence-transformers not available")
 
+client = Groq(api_key=os.getenv("GROQ_API_KEY"))
 START_TIME = time.time()
 response_times = []
 
@@ -55,41 +64,6 @@ def save_to_cache(key, data, ttl=900):
     except:
         pass
 
-def describe_fallback(vendor_name):
-    return {
-        "vendor_name": vendor_name,
-        "analysis": "AI service temporarily unavailable. Please try again later.",
-        "is_fallback": True,
-        "generated_at": datetime.utcnow().isoformat() + "Z"
-    }
-
-def recommend_fallback(vendor_name):
-    return {
-        "vendor_name": vendor_name,
-        "recommendations": [
-            {"action_type": "monitor", "description": "Monitor vendor performance closely.", "priority": "high"},
-            {"action_type": "improve", "description": "Request performance improvement plan.", "priority": "medium"},
-            {"action_type": "monitor", "description": "Schedule quarterly review meeting.", "priority": "low"}
-        ],
-        "is_fallback": True,
-        "generated_at": datetime.utcnow().isoformat() + "Z"
-    }
-
-def report_fallback(vendor_name, report_period):
-    return {
-        "vendor_name": vendor_name,
-        "report_period": report_period,
-        "report": {
-            "title": f"Performance Report for {vendor_name}",
-            "summary": "AI service temporarily unavailable. Report generated with default template.",
-            "overview": "Please try again later for a detailed AI-generated report.",
-            "key_items": ["Data collection in progress", "Analysis pending", "Report will be available soon"],
-            "recommendations": ["Monitor performance", "Schedule review", "Update contract terms"]
-        },
-        "is_fallback": True,
-        "generated_at": datetime.utcnow().isoformat() + "Z"
-    }
-
 @app.route('/health', methods=['GET'])
 def health():
     uptime_seconds = int(time.time() - START_TIME)
@@ -101,6 +75,7 @@ def health():
         "uptime_seconds": uptime_seconds,
         "avg_response_time_ms": avg,
         "redis_connected": REDIS_AVAILABLE,
+        "embeddings_available": EMBEDDINGS_AVAILABLE,
         "total_requests": len(response_times)
     })
 
@@ -140,8 +115,12 @@ def describe():
         response_times.append((time.time() - start) * 1000)
         return jsonify(output)
     except Exception as e:
-        fallback = describe_fallback(data['vendor_name'])
-        return jsonify(fallback), 200
+        return jsonify({
+            "vendor_name": data['vendor_name'],
+            "analysis": "AI service temporarily unavailable.",
+            "is_fallback": True,
+            "generated_at": datetime.utcnow().isoformat() + "Z"
+        }), 200
 
 @app.route('/recommend', methods=['POST'])
 def recommend():
@@ -180,8 +159,12 @@ def recommend():
         response_times.append((time.time() - start) * 1000)
         return jsonify(output)
     except Exception as e:
-        fallback = recommend_fallback(data['vendor_name'])
-        return jsonify(fallback), 200
+        return jsonify({
+            "vendor_name": data['vendor_name'],
+            "recommendations": [],
+            "is_fallback": True,
+            "generated_at": datetime.utcnow().isoformat() + "Z"
+        }), 200
 
 @app.route('/generate-report', methods=['POST'])
 def generate_report():
@@ -223,8 +206,12 @@ def generate_report():
         response_times.append((time.time() - start) * 1000)
         return jsonify(output)
     except Exception as e:
-        fallback = report_fallback(data['vendor_name'], data['report_period'])
-        return jsonify(fallback), 200
+        return jsonify({
+            "vendor_name": data['vendor_name'],
+            "report_period": data['report_period'],
+            "is_fallback": True,
+            "generated_at": datetime.utcnow().isoformat() + "Z"
+        }), 200
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5000, debug=True)
