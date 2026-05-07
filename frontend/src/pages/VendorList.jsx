@@ -2,38 +2,35 @@ import { useEffect, useState } from "react";
 import api from "../services/api";
 
 export default function VendorList() {
-  const [vendors, setVendors] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const [data, setData] = useState([]);
+  const [page, setPage] = useState(0);
 
   useEffect(() => {
-    api.get("/vendors")
-      .then((res) => {
-        setVendors(res.data);
-        setLoading(false);
-      })
-      .catch(() => setLoading(false));
-  }, []);
-
-  if (loading) return <p>Loading...</p>;
-
-  if (vendors.length === 0) return <p>No data found</p>;
+    api.get(`/vendors?page=${page}&size=5`)
+      .then((res) => setData(res.data));
+  }, [page]);
 
   return (
-    <table border="1">
-      <thead>
-        <tr>
-          <th>ID</th>
-          <th>Name</th>
-        </tr>
-      </thead>
-      <tbody>
-        {vendors.map((v) => (
-          <tr key={v.id}>
-            <td>{v.id}</td>
-            <td>{v.name}</td>
+    <div>
+      <h2>Vendor List</h2>
+
+      <table border="1">
+        <thead>
+          <tr>
+            <th>Name</th>
           </tr>
-        ))}
-      </tbody>
-    </table>
+        </thead>
+        <tbody>
+          {data.map((v) => (
+            <tr key={v.id}>
+              <td>{v.name}</td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+
+      <button onClick={() => setPage(page - 1)}>Prev</button>
+      <button onClick={() => setPage(page + 1)}>Next</button>
+    </div>
   );
 }
