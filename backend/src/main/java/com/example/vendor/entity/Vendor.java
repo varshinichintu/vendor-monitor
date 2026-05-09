@@ -11,6 +11,18 @@ public class Vendor {
 
     private String name;
     private String email;
+    private String status;
+    private Double rating;
+
+    public Vendor() {
+    }
+
+    public Vendor(String name, String email, String status, Double rating) {
+        this.name = name;
+        this.email = email;
+        this.status = status;
+        this.rating = rating;
+    }
 
     public Long getId() {
         return id;
@@ -34,5 +46,21 @@ public class Vendor {
 
     public void setEmail(String email) {
         this.email = email;
+    }
+
+    public String getStatus() {
+        return status;
+    }
+
+    public void setStatus(String status) {
+        this.status = status;
+    }
+
+    public Double getRating() {
+        return rating;
+    }
+
+    public void setRating(Double rating) {
+        this.rating = rating;
     }
 }

@@ -1,0 +1,36 @@
+.analytics-container {
+    width: 100%;
+    padding: 20px;
+}
+
+.chart-container {
+    width: 100%;
+    height: 300px;
+}
+
+/* Mobile */
+@media (max-width: 375px) {
+    .analytics-container {
+        padding: 10px;
+    }
+
+    select {
+        width: 100%;
+        margin-bottom: 15px;
+    }
+}
+
+/* Tablet */
+@media (min-width: 768px) {
+    .analytics-container {
+        padding: 20px;
+    }
+}
+
+/* Desktop */
+@media (min-width: 1280px) {
+    .analytics-container {
+        max-width: 1200px;
+        margin: auto;
+    }
+}

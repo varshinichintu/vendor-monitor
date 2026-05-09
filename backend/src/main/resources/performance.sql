@@ -1,0 +1,3 @@
+EXPLAIN ANALYZE
+SELECT * FROM vendors
+WHERE status = 'ACTIVE';
